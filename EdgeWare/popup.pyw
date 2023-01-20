@@ -226,8 +226,12 @@ class VideoLabel(tk.Label):
         from types import NoneType
         if not isinstance(self.audio_track, NoneType):
             try:
-                import sounddevice
-                sounddevice.play(self.audio_track, samplerate=len(self.audio_track) / self.duration, loop=True)
+                import numpy
+                import pygame
+                self.audio_track = numpy.array(self.audio_track)
+                self.audio_track *= 32767 / numpy.max(numpy.abs(self.audio_track))
+                self.audio_track = pygame.sndarray.make_sound(self.audio_track.astype(numpy.int16))
+                self.audio_track.play(-1)
             except Exception as e:
                 print(f'failed to play sound, reason:\n\t{e}')
         while True:
