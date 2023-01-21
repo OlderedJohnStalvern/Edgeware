@@ -213,6 +213,7 @@ class VideoLabel(tk.Label):
         media.get_mrl()
         self.player.set_media(media)
         self.player.set_hwnd(self.winfo_id())
+        self.player.audio_set_volume(int(VIDEO_VOLUME*100))
         self.player.play()
 
 
