@@ -200,44 +200,21 @@ class GifLabel(tk.Label):
 #video label class
 class VideoLabel(tk.Label):
     def load(self, path:str, resized_width:int, resized_height:int):
-        import imageio
-        from moviepy.editor import AudioFileClip
-        from videoprops import get_video_properties
-        
         self.path = path
-        self.configure(background='black')
         self.wid = resized_width
         self.hgt = resized_height
-        self.video_properties = get_video_properties(path)
-        self.audio = AudioFileClip(self.path)
-        self.fps = float(self.video_properties['avg_frame_rate'].split('/')[0]) / float(self.video_properties['avg_frame_rate'].split('/')[1])
-        try:
-            self.audio_track = self.audio.to_soundarray()
-            print(self.audio_track)
-            self.audio_track = [[VIDEO_VOLUME*v[0], VIDEO_VOLUME*v[1]] for v in self.audio_track]
-            self.duration = float(self.video_properties['duration'])
-        except:
-            self.audio_track = None
-            self.duration = None
-        self.video_frames = imageio.get_reader(path)
-        self.delay = 1 / self.fps
         
     def play(self):
-        from types import NoneType
-        if not isinstance(self.audio_track, NoneType):
-            try:
-                import sounddevice
-                sounddevice.play(self.audio_track, samplerate=len(self.audio_track) / self.duration, loop=True)
-            except Exception as e:
-                print(f'failed to play sound, reason:\n\t{e}')
-        while True:
-            for frame in self.video_frames.iter_data():
-                self.time_offset_start = time.perf_counter()
-                self.video_frame_image = ImageTk.PhotoImage(Image.fromarray(frame).resize((self.wid, self.hgt)))
-                self.config(image=self.video_frame_image)
-                self.image = self.video_frame_image
-                self.time_offset_end = time.perf_counter()
-                time.sleep(max(0, self.delay - (self.time_offset_end - self.time_offset_start)))
+        import vlc
+        self.config(height=self.hgt, width=self.wid)
+        self.instance = vlc.Instance('--input-repeat=999999')
+        self.player = self.instance.media_player_new()
+        media = self.instance.media_new(self.path)
+        media.get_mrl()
+        self.player.set_media(media)
+        self.player.set_hwnd(self.winfo_id())
+        self.player.audio_set_volume(int(VIDEO_VOLUME*100))
+        self.player.play()
 
 
 def run():
